@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ОТК Калькулятор | Потери доски</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1f5068">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ОТК Калькулятор">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231f5068'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3E📊%3C/text%3E%3C/svg%3E">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        body {
+            background: #eef2f8;
+            margin: 0;
+            padding: 12px;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .top-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .params-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+            justify-content: space-between;
+        }
+        .param {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 140px;
+        }
+        .param label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #1f5068;
+        }
+        .param input {
+            font-size: 1rem;
+            padding: 8px 12px;
+            border: 1px solid #cbdde6;
+            border-radius: 28px;
+            width: 100%;
+            font-weight: 500;
+        }
+        .param small {
+            font-size: 0.6rem;
+            color: #5f7f9a;
+        }
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            background: #f0f5fa;
+            padding: 4px;
+            border-radius: 48px;
+            align-items: center;
+        }
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1f5068;
+        }
+        .toggle-btn.active {
+            background: #1f6e8c;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .button-group {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #1f6e8c;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            flex: 1;
+            min-width: 130px;
+        }
+        button:hover {
+            background: #0e5a77;
+        }
+        .excel-btn {
+            background: #2d6a4f;
+        }
+        .excel-btn:hover {
+            background: #1f543e;
+        }
+        .reset-btn {
+            background: #b45309;
+        }
+        .reset-btn:hover {
+            background: #9b4307;
+        }
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: #f0f5fa;
+            padding: 12px 20px;
+            border-radius: 48px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-group {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat-badge {
+            text-align: center;
+        }
+        .stat-badge .label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #2c5a74;
+        }
+        .stat-badge .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: monospace;
+            color: #1f5068;
+            line-height: 1.2;
+        }
+        .stat-badge.total .value {
+            color: #d97706;
+        }
+        .param-inline {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            min-width: 140px;
+        }
+        .param-inline label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #2c5a74;
+        }
+        .param-inline .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .table-wrapper {
+            background: white;
+            border-radius: 24px;
+            overflow-x: auto;
+            margin-bottom: 24px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+            padding: 4px 0;
+        }
+        h3 {
+            margin: 0 0 8px 12px;
+            font-size: 0.95rem;
+            color: #1f5068;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 300px;
+        }
+        th {
+            background: #1f5068;
+            color: white;
+            padding: 8px 4px;
+            border: 1px solid #2f6b88;
+            font-size: 0.7rem;
+        }
+        td {
+            border: 1px solid #e0e8ef;
+            padding: 6px 3px;
+            text-align: center;
+            background: white;
+        }
+        .size-col {
+            background: #f0f5fa;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .input-cell input {
+            width: 62px;
+            padding: 6px 2px;
+            text-align: center;
+            border: 1px solid #c0d0dd;
+            border-radius: 20px;
+            font-weight: 500;
+            background: #fefdf6;
+            font-size: 0.8rem;
+        }
+        .loss-table-wrapper {
+            background: white;
+            border-radius: 24px;
+            padding: 12px 12px;
+            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .loss-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .loss-table th {
+            background: #e0e9f0;
+            color: #1f5068;
+            padding: 8px 6px;
+            border: 1px solid #cbdde6;
+        }
+        .loss-table td {
+            padding: 8px 6px;
+            border: 1px solid #e2eaf0;
+        }
+        .loss-value {
+            font-family: monospace;
+            font-weight: 600;
+            text-align: right;
+        }
+        .footer-note {
+            font-size: 0.65rem;
+            text-align: center;
+            color: #4f6f87;
+            margin-top: 20px;
+            background: #f4f8fc;
+            padding: 12px;
+            border-radius: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+        .email-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e0e9f0;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .copy-icon {
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.1s;
+            padding: 2px 4px;
+            border-radius: 20px;
+        }
+        .copy-icon:hover {
+            background: #cbdde6;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f5068;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        @media (max-width: 560px) {
+            .params-group { flex-direction: column; align-items: stretch; }
+            .button-group { flex-direction: column; }
+            button { width: 100%; }
+            .stats-row { flex-direction: column; align-items: stretch; }
+            .stats-group { justify-content: space-between; }
+            .footer-note { flex-direction: column; }
+        }
+
+        .input-row-even {
+            background-color: #f5e6c4;
+        }
+        .input-row-odd {
+            background-color: #faf0dd;
+        }
+        .input-row-even td, .input-row-odd td {
+            background-color: inherit;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="top-panel">
+        <div class="params-group">
+            <div class="param">
+                <label>📏 Ширина доски</label>
+                <div class="toggle-group" id="widthToggle">
+                    <button class="toggle-btn active" data-width="140">140 мм</button>
+                    <button class="toggle-btn" data-width="180">180 мм</button>
+                </div>
+            </div>
+            <div class="param">
+                <label>📐 Размерный ряд</label>
+                <div class="toggle-group" id="sizeModeToggle">
+                    <button class="toggle-btn active" data-mode="full">2.31 (полный)</button>
+                    <button class="toggle-btn" data-mode="compact">1.81 (компакт)</button>
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="exportExcelBtn" class="excel-btn">📎 Выгрузить в Excel</button>
+                <button id="recalcBtn">⟳ Пересчитать</button>
+            </div>
+        </div>
+        <div class="stats-row" id="statsPanel">
+            <div class="stats-group">
+                <div class="param-inline">
+                    <label>🔢 Номер партии</label>
+                    <div class="value" id="batchNumberDisplay">1</div>
+                </div>
+                <div class="param-inline">
+                    <label>📐 Площадь партии (м²)</label>
+                    <div class="value" id="totalAreaDisplay">100.000</div>
+                </div>
+                <button id="resetAllBtn" class="reset-btn">🧹 Сбросить всё в ноль</button>
+            </div>
+            <div class="stats-group" id="lossStatsGroup">
+                <div class="stat-badge">
+                    <div class="label">📉 общие потери</div>
+                    <div class="value" id="totalLossValue">0.000 <span class="small-unit">м²</span></div>
+                </div>
+                <div class="stat-badge total">
+                    <div class="label">⚠️ % от партии</div>
+                    <div class="value" id="totalPercentValue">0.000%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <h3>📥 ВХОД (шт.)</h3>
+        <table id="inputTable">
+            <thead id="inputHeader"></thead>
+            <tbody id="inputTbody"></tbody>
+        </table>
+    </div>
+
+    <div class="table-wrapper">
+        <h3>📤 ВЫХОД (шт.)</h3>
+        <table id="outputTable">
+            <thead id="outputHeader"></thead>
+            <tbody id="outputTbody"></tbody>
+        </table>
+    </div>
+
+    <div class="loss-table-wrapper">
+        <h4>📉 Потери по дефектам</h4>
+        <table class="loss-table" id="lossTable">
+            <thead><tr><th>Дефект</th><th>Потери (м²)</th><th>% от партии</th></tr></thead>
+            <tbody id="lossTableBody"></tbody>
+        </table>
+    </div>
+    <div class="footer-note">
+        ✅ сделано по заказу Екатерины ОТК.<br>
+        🟢 Сделал Алексей.<br>
+        📉 Алексей хочет торт.<br>
+        <span class="email-copy">✉️ <strong>14@xaker.ru<strong> <span class="copy-icon" id="copyEmailBtn">📋</span></span>
+      
+    </div>
+</div>
+<div id="toastMsg" class="toast-msg">Почта скопирована!</div>
+
+<script>
+    // ---------- ЗАПРОС РАЗРЕШЕНИЯ НА ЗАПИСЬ ФАЙЛОВ (Android) ----------
+    async function requestStoragePermission() {
+        // Проверяем, есть ли API разрешений (Android WebView / Chrome)
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                const result = await navigator.permissions.query({ name: 'android-permission/WRITE_EXTERNAL_STORAGE' });
+                console.log('Permission status:', result.state);
+            } catch(e) {
+                // не все браузеры поддерживают этот специфичный запрос
+            }
+        }
+        
+        // Для Android WebView: пробуем через Java-мост (если есть)
+        if (window.Android && window.Android.requestStoragePermission) {
+            window.Android.requestStoragePermission();
+        }
+        
+        // Для современных Android браузеров (Chrome) — показываем уведомление
+        if (navigator.userAgent.toLowerCase().includes('android')) {
+            showToast('⚠️ Если выгрузка не работает, дайте разрешение на файлы в настройках приложения');
+        }
+    }
+    
+    // Вызов запроса разрешения при загрузке страницы
+    window.addEventListener('load', () => {
+        requestStoragePermission();
+    });
+    
+    // ---------- ОСНОВНОЙ КОД КАЛЬКУЛЯТОРА ----------
+    const FULL_SIZES = [2.31, 1.81, 1.655, 1.5, 1.405, 1.31, 1.155, 1.0, 0.905, 0.81, 0.655, 0.5];
+    const COMPACT_SIZES = [1.81, 1.31, 1.155, 1.0, 0.905, 0.81, 0.655, 0.5];
+    
+    let currentSizeMode = 'full';
+    let currentWidthMM = 140;
+    
+    const DEFECTS = [
+        "Сколы", "Трещины", "Мех.пов", "Сучки", "Желтизна", "Гниль", "Прорость",
+        "Длина", "Ширина", "Зашлиф", "Заболонь",
+        "Черв(вх)", "Фанера", "Короб", "Сетки", "Прочее"
+    ];
+    const DEF_COUNT = DEFECTS.length;
+
+    let fullInputData = FULL_SIZES.map(() => new Array(DEF_COUNT).fill(0));
+    let fullOutputData = FULL_SIZES.filter(s => s !== 2.31).map(() => new Array(DEF_COUNT).fill(0));
+
+    function getCurrentSizes() {
+        return currentSizeMode === 'full' ? FULL_SIZES : COMPACT_SIZES;
+    }
+
+    function getOutputSizes() {
+        let sizes = getCurrentSizes();
+        return sizes.filter(s => s !== 2.31);
+    }
+
+    function getActiveInputData() {
+        const currentSizes = getCurrentSizes();
+        return currentSizes.map(size => {
+            const idx = FULL_SIZES.indexOf(size);
+            return fullInputData[idx];
+        });
+    }
+
+    function getActiveOutputData() {
+        const currentOutputSizes = getOutputSizes();
+        const fullOutputSizes = FULL_SIZES.filter(s => s !== 2.31);
+        return currentOutputSizes.map(size => {
+            const idx = fullOutputSizes.indexOf(size);
+            return fullOutputData[idx];
+        });
+    }
+
+    function getWidthMeters() {
+        return currentWidthMM / 1000;
+    }
+    function getTotalArea() {
+        let area = parseFloat(document.getElementById('totalAreaDisplay').innerText);
+        return (isNaN(area) || area <= 0) ? 100 : area;
+    }
+    function getBatchNumber() {
+        let bn = parseInt(document.getElementById('batchNumberDisplay').innerText);
+        return isNaN(bn) ? 1 : bn;
+    }
+    function formatThree(v) { return v.toFixed(3); }
+
+    function updateInputsFromDisplays() {
+        const batchSpan = document.getElementById('batchNumberDisplay');
+        const areaSpan = document.getElementById('totalAreaDisplay');
+        if (batchSpan.contentEditable === 'true') return;
+        batchSpan.contentEditable = 'true';
+        areaSpan.contentEditable = 'true';
+        batchSpan.addEventListener('blur', () => {
+            let val = parseInt(batchSpan.innerText);
+            if (isNaN(val)) val = 1;
+            batchSpan.innerText = val;
+            fullRefresh();
+        });
+        areaSpan.addEventListener('blur', () => {
+            let val = parseFloat(areaSpan.innerText);
+            if (isNaN(val)) val = 100;
+            areaSpan.innerText = val.toFixed(3);
+            fullRefresh();
+        });
+        batchSpan.addEventListener('keypress', (e) => { if (e.key === 'Enter') batchSpan.blur(); });
+        areaSpan.addEventListener('keypress', (e) => { if (e.key === 'Enter') areaSpan.blur(); });
+    }
+
+    function resetAllData() {
+        for (let i = 0; i < FULL_SIZES.length; i++) {
+            for (let d = 0; d < DEF_COUNT; d++) {
+                fullInputData[i][d] = 0;
+            }
+        }
+        const fullOutputSizes = FULL_SIZES.filter(s => s !== 2.31);
+        for (let i = 0; i < fullOutputSizes.length; i++) {
+            for (let d = 0; d < DEF_COUNT; d++) {
+                fullOutputData[i][d] = 0;
+            }
+        }
+        fullRefresh();
+    }
+
+    function getActiveDefects() {
+        let active = [];
+        const activeInputData = getActiveInputData();
+        for (let d = 0; d < DEF_COUNT; d++) {
+            for (let i = 0; i < activeInputData.length; i++) {
+                if (activeInputData[i][d] > 0) { active.push(d); break; }
+            }
+        }
+        return active;
+    }
+
+    function renderInputTable() {
+        const headerRow = document.getElementById('inputHeader');
+        const tbody = document.getElementById('inputTbody');
+        headerRow.innerHTML = '';
+        tbody.innerHTML = '';
+        let h = '<tr><th>Размер (м)</th>';
+        DEFECTS.forEach(def => { h += `<th>${def}</th>`; });
+        h += '</tr>';
+        headerRow.innerHTML = h;
+
+        const activeInputData = getActiveInputData();
+        const currentSizes = getCurrentSizes();
+        for (let i = 0; i < currentSizes.length; i++) {
+            const tr = document.createElement('tr');
+            if (i % 2 === 0) {
+                tr.classList.add('input-row-even');
+            } else {
+                tr.classList.add('input-row-odd');
+            }
+            const tdSize = document.createElement('td');
+            tdSize.innerText = currentSizes[i].toFixed(3);
+            tdSize.classList.add('size-col');
+            tr.appendChild(tdSize);
+            for (let d = 0; d < DEF_COUNT; d++) {
+                const td = document.createElement('td');
+                td.classList.add('input-cell');
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.value = activeInputData[i][d];
+                inp.step = '1';
+                inp.min = '0';
+                const fullRowIdx = FULL_SIZES.indexOf(currentSizes[i]);
+                inp.addEventListener('change', ((row, col, fullRow) => (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    fullInputData[fullRow][col] = Math.max(0, val);
+                    fullRefresh();
+                })(i, d, fullRowIdx));
+                td.appendChild(inp);
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+    }
+
+    function renderOutputTable() {
+        const activeDefs = getActiveDefects();
+        const headerCell = document.getElementById('outputHeader');
+        const tbody = document.getElementById('outputTbody');
+        headerCell.innerHTML = '';
+        tbody.innerHTML = '';
+
+        let h = '<tr><th>Размер (м)</th>';
+        for (let idx of activeDefs) h += `<th>${DEFECTS[idx]}</th>`;
+        h += '</tr>';
+        headerCell.innerHTML = h;
+
+        if (activeDefs.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 1;
+            td.innerText = 'Нет активных дефектов (вход пуст)';
+            td.style.textAlign = 'center';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+
+        const currentOutputSizes = getOutputSizes();
+        const activeOutputData = getActiveOutputData();
+        const fullOutputSizes = FULL_SIZES.filter(s => s !== 2.31);
+        
+        for (let outIdx = 0; outIdx < currentOutputSizes.length; outIdx++) {
+            const size = currentOutputSizes[outIdx];
+            const tr = document.createElement('tr');
+            const tdSize = document.createElement('td');
+            tdSize.innerText = size.toFixed(3);
+            tdSize.classList.add('size-col');
+            tr.appendChild(tdSize);
+            for (let dIdx of activeDefs) {
+                const td = document.createElement('td');
+                td.classList.add('input-cell');
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.value = activeOutputData[outIdx][dIdx];
+                inp.step = '1';
+                inp.min = '0';
+                const fullRowIdx = fullOutputSizes.indexOf(size);
+                inp.addEventListener('change', ((row, col, fullRow) => (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    fullOutputData[fullRow][col] = Math.max(0, val);
+                    fullRefresh();
+                })(outIdx, dIdx, fullRowIdx));
+                td.appendChild(inp);
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+    }
+
+    function renderLossAndStats() {
+        const widthM = getWidthMeters();
+        const totalAreaM2 = getTotalArea();
+        const inputSizes = getCurrentSizes();
+        const outputSizes = getOutputSizes();
+        const activeInputData = getActiveInputData();
+        const activeOutputData = getActiveOutputData();
+
+        let inArea = new Array(DEF_COUNT).fill(0);
+        let outArea = new Array(DEF_COUNT).fill(0);
+        for (let i = 0; i < inputSizes.length; i++) {
+            const size = inputSizes[i];
+            for (let d = 0; d < DEF_COUNT; d++) {
+                if (activeInputData[i][d]) inArea[d] += size * widthM * activeInputData[i][d];
+            }
+        }
+        for (let i = 0; i < outputSizes.length; i++) {
+            const size = outputSizes[i];
+            for (let d = 0; d < DEF_COUNT; d++) {
+                if (activeOutputData[i][d]) outArea[d] += size * widthM * activeOutputData[i][d];
+            }
+        }
+
+        let loss = inArea.map((v, idx) => Math.max(0, v - outArea[idx]));
+        let totalLoss = loss.reduce((a,b) => a + b, 0);
+        let totalPercent = totalAreaM2 > 0 ? (totalLoss / totalAreaM2) * 100 : 0;
+
+        document.getElementById('totalLossValue').innerHTML = `${formatThree(totalLoss)} <span class="small-unit">м²</span>`;
+        document.getElementById('totalPercentValue').innerText = `${totalPercent.toFixed(3)}%`;
+
+        const lossBody = document.getElementById('lossTableBody');
+        lossBody.innerHTML = '';
+        let hasAny = false;
+        for (let d = 0; d < DEF_COUNT; d++) {
+            if (loss[d] > 0) {
+                hasAny = true;
+                const percent = totalAreaM2 > 0 ? (loss[d] / totalAreaM2) * 100 : 0;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight:500;">${DEFECTS[d]}</td>
+                    <td class="loss-value">${formatThree(loss[d])} м²</td>
+                    <td class="loss-value">${percent.toFixed(3)}%</td>
+                `;
+                lossBody.appendChild(row);
+            }
+        }
+        if (!hasAny) {
+            const row = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 3;
+            td.innerText = 'Нет потерь (все потери = 0)';
+            td.style.textAlign = 'center';
+            row.appendChild(td);
+            lossBody.appendChild(row);
+        }
+    }
+
+    function fullRefresh() {
+        renderInputTable();
+        renderOutputTable();
+        renderLossAndStats();
+    }
+
+    function exportToExcel() {
+        const widthM = getWidthMeters();
+        const totalAreaM2 = getTotalArea();
+        const batchNum = getBatchNumber();
+        const inputSizes = getCurrentSizes();
+        const outputSizes = getOutputSizes();
+        const activeInputData = getActiveInputData();
+        const activeOutputData = getActiveOutputData();
+
+        let inArea = new Array(DEF_COUNT).fill(0);
+        let outArea = new Array(DEF_COUNT).fill(0);
+        for (let i = 0; i < inputSizes.length; i++) {
+            const size = inputSizes[i];
+            for (let d = 0; d < DEF_COUNT; d++) {
+                if (activeInputData[i][d]) inArea[d] += size * widthM * activeInputData[i][d];
+            }
+        }
+        for (let i = 0; i < outputSizes.length; i++) {
+            const size = outputSizes[i];
+            for (let d = 0; d < DEF_COUNT; d++) {
+                if (activeOutputData[i][d]) outArea[d] += size * widthM * activeOutputData[i][d];
+            }
+        }
+        let loss = inArea.map((v, idx) => Math.max(0, v - outArea[idx]));
+        let totalLoss = loss.reduce((a,b) => a + b, 0);
+        let totalPercent = totalAreaM2 > 0 ? (totalLoss / totalAreaM2) * 100 : 0;
+
+        let rows = [];
+        rows.push([`Номер партии: ${batchNum}`]);
+        rows.push([`Общая площадь партии: ${totalAreaM2.toFixed(3)} м²`]);
+        rows.push([`Ширина доски: ${(widthM*1000).toFixed(0)} мм`]);
+        rows.push([`Размерный режим: ${currentSizeMode === 'full' ? '2.31 (полный)' : '1.81 (компакт)'}`]);
+        rows.push([]);
+        rows.push(["Дефект", "Потери (м²)", "% от партии"]);
+
+        let hasAny = false;
+        for (let d = 0; d < DEF_COUNT; d++) {
+            if (loss[d] > 0) {
+                hasAny = true;
+                rows.push([DEFECTS[d], loss[d].toFixed(3), (loss[d] / totalAreaM2 * 100).toFixed(3) + "%"]);
+            }
+        }
+        if (!hasAny) {
+            rows.push(["Нет потерь", "0.000", "0.000%"]);
+        }
+        rows.push(["ИТОГО", totalLoss.toFixed(3), totalPercent.toFixed(3) + "%"]);
+
+        let csv = rows.map(r => r.join(";")).join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "application/vnd.ms-excel;charset=utf-8" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = `otk_poteri_партия_${batchNum}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('Файл Excel выгружен');
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toastMsg');
+        toast.innerText = message;
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 1500);
+    }
+
+    function initToggles() {
+        const widthBtns = document.querySelectorAll('#widthToggle .toggle-btn');
+        widthBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                widthBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentWidthMM = parseInt(btn.getAttribute('data-width'));
+                fullRefresh();
+            });
+        });
+        const sizeBtns = document.querySelectorAll('#sizeModeToggle .toggle-btn');
+        sizeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSizeMode = btn.getAttribute('data-mode');
+                fullRefresh();
+            });
+        });
+    }
+
+    function init() {
+        initToggles();
+        updateInputsFromDisplays();
+        fullRefresh();
+        document.getElementById('recalcBtn').addEventListener('click', () => fullRefresh());
+        document.getElementById('exportExcelBtn').addEventListener('click', () => exportToExcel());
+        document.getElementById('resetAllBtn').addEventListener('click', () => resetAllData());
+        
+        const copyBtn = document.getElementById('copyEmailBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                const email = '14@xaker.ru';
+                navigator.clipboard.writeText(email).then(() => {
+                    showToast('Почта скопирована!');
+                }).catch(() => {
+                    showToast('Не удалось скопировать');
+                });
+            });
+        }
+    }
+    init();
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW регистрация не удалась:', err));
+    }
+    (function setupPWA() {
+        const manifest = {
+            name: "ОТК Калькулятор потерь",
+            short_name: "ОТК",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#1f5068",
+            theme_color: "#1f5068",
+            icons: [
+                {
+                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231f5068'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3E📊%3C/text%3E%3C/svg%3E",
+                    sizes: "any",
+                    type: "image/svg+xml",
+                    purpose: "any"
+                }
+            ]
+        };
+        if (!document.querySelector('link[rel="manifest"]')) {
+            const blobMan = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manUrl = URL.createObjectURL(blobMan);
+            const linkMan = document.createElement('link');
+            linkMan.rel = 'manifest';
+            linkMan.href = manUrl;
+            document.head.appendChild(linkMan);
+        }
+        const swCode = `self.addEventListener('install', event => { self.skipWaiting(); });
+self.addEventListener('fetch', event => { event.respondWith(fetch(event.request)); });`;
+        const blobSw = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blobSw);
+        navigator.serviceWorker.getRegistrations().then(regs => { for(let r of regs) r.unregister(); });
+        navigator.serviceWorker.register(swUrl).then(() => console.log('PWA Service Worker зарегистрирован (inline)'));
+    })();
+</script>
+</body>
+</html>
